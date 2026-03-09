@@ -1,0 +1,6 @@
+name,email,registration_number,phone,address,status,department_codes,department_names,department_ids,photo,password
+Ada Okoro,ada.okoro@example.com,REG-1001,08010000001,12 Unity Road,active,SCI,,,uploads/candidates/student.jpg,
+Tunde Bello,tunde.bello@example.com,REG-1002,08010000002,8 Market Street,inactive,ENG,,,uploads/candidates/student.jpg,
+Chiamaka Nwosu,chiamaka.nwosu@example.com,REG-1003,08010000003,21 Palm Avenue,active,BUS,,,uploads/candidates/student.jpg,
+Ibrahim Musa,ibrahim.musa@example.com,REG-1004,08010000004,4 Airport Road,suspended,SCI|ENG,,,uploads/candidates/student.jpg,
+Zainab Yusuf,zainab.yusuf@example.com,REG-1005,08010000005,55 Coastal Drive,banned,ART,,,uploads/candidates/student.jpg,

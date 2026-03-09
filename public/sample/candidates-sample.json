@@ -1,0 +1,57 @@
+[
+    {
+        "name": "Ada Okoro",
+        "email": "ada.okoro@example.com",
+        "registration_number": "REG-1001",
+        "phone": "08010000001",
+        "address": "12 Unity Road",
+        "status": "active",
+        "department_codes": ["SCI"],
+        "photo": "uploads/candidates/student.jpg",
+        "password": "Passw0rd!"
+    },
+    {
+        "name": "Tunde Bello",
+        "email": "tunde.bello@example.com",
+        "registration_number": "REG-1002",
+        "phone": "08010000002",
+        "address": "8 Market Street",
+        "status": "inactive",
+        "department_codes": ["ENG"],
+        "photo": "uploads/candidates/student.jpg",
+        "password": "Passw0rd!"
+    },
+    {
+        "name": "Chiamaka Nwosu",
+        "email": "chiamaka.nwosu@example.com",
+        "registration_number": "REG-1003",
+        "phone": "08010000003",
+        "address": "21 Palm Avenue",
+        "status": "active",
+        "department_codes": ["BUS"],
+        "photo": "uploads/candidates/student.jpg",
+        "password": "Passw0rd!"
+    },
+    {
+        "name": "Ibrahim Musa",
+        "email": "ibrahim.musa@example.com",
+        "registration_number": "REG-1004",
+        "phone": "08010000004",
+        "address": "4 Airport Road",
+        "status": "suspended",
+        "department_codes": ["SCI", "ENG"],
+        "photo": "uploads/candidates/student.jpg",
+        "password": "Passw0rd!"
+    },
+    {
+        "name": "Zainab Yusuf",
+        "email": "zainab.yusuf@example.com",
+        "registration_number": "REG-1005",
+        "phone": "08010000005",
+        "address": "55 Coastal Drive",
+        "status": "banned",
+        "department_codes": ["ART"],
+        "photo": "uploads/candidates/student.jpg",
+        "password": "Passw0rd!"
+    }
+]

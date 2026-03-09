@@ -1,0 +1,42 @@
+[
+    {
+        "question_text": "What is the SI unit of force?",
+        "question_type": "msa",
+        "marks": 2,
+        "is_active": true,
+        "explanation": "Force is measured in newtons (N).",
+        "metadata": {"difficulty": "easy", "topic": "Physics"},
+        "options": [
+            {"label": "A", "description": "Newton", "is_correct": true},
+            {"label": "B", "description": "Joule", "is_correct": false},
+            {"label": "C", "description": "Watt", "is_correct": false},
+            {"label": "D", "description": "Pascal", "is_correct": false}
+        ]
+    },
+    {
+        "question_text": "Select all prime numbers below.",
+        "question_type": "mma",
+        "marks": 3,
+        "is_active": true,
+        "explanation": "Prime numbers have exactly two distinct factors.",
+        "metadata": {"difficulty": "medium", "topic": "Mathematics"},
+        "options": [
+            {"label": "A", "description": "2", "is_correct": true},
+            {"label": "B", "description": "4", "is_correct": false},
+            {"label": "C", "description": "5", "is_correct": true},
+            {"label": "D", "description": "9", "is_correct": false}
+        ]
+    },
+    {
+        "question_text": "The Earth revolves around the Sun.",
+        "question_type": "tof",
+        "marks": 1,
+        "is_active": true,
+        "explanation": "This is true.",
+        "metadata": {"difficulty": "easy", "topic": "Science"},
+        "options": [
+            {"label": "True", "description": "True", "is_correct": true},
+            {"label": "False", "description": "False", "is_correct": false}
+        ]
+    }
+]
