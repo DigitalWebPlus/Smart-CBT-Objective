@@ -30,6 +30,10 @@ class AuthenticatedSessionController extends Controller
      */
     public function store(LoginRequest $request): RedirectResponse
     {
+        $loginField = (string) config('settings.candidate_login_mode', 'registration_number') === 'registration_number'
+            ? 'registration_number'
+            : 'email';
+
         try {
             $request->authenticate();
         } catch (ValidationException $exception) {
@@ -37,7 +41,8 @@ class AuthenticatedSessionController extends Controller
                 action: 'candidate.auth.login.failed',
                 metadata: [
                     'actor_type' => 'candidate',
-                    'email' => (string) $request->input('email', ''),
+                    'identifier' => (string) $request->input($loginField, ''),
+                    'identifier_type' => $loginField,
                 ],
                 request: $request
             );

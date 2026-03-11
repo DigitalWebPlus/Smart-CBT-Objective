@@ -36,6 +36,7 @@
     $isMonitor = request()->routeIs('admin.monitor-exams.*');
     $isSupport = request()->routeIs('admin.support-tickets.*');
     $isLogs = request()->routeIs('admin.logs.*');
+    $isExamSettings = request()->routeIs('admin.exam-settings.*');
     $isSettings = request()->routeIs('admin.settings.*');
 @endphp
 <aside class="navbar navbar-vertical navbar-expand-lg" data-bs-theme="dark">
@@ -287,6 +288,17 @@
                         </span>
                         <span class="nav-link-title">
                             System Logs
+                        </span>
+                    </a>
+                </li>
+
+                <li class="nav-item {{ $isExamSettings ? 'active' : '' }}">
+                    <a class="nav-link" href="{{ route('admin.exam-settings.edit') }}">
+                        <span class="nav-link-icon d-md-none d-lg-inline-block">
+                            <i class="ti ti-adjustments"></i>
+                        </span>
+                        <span class="nav-link-title">
+                            Exam Settings
                         </span>
                     </a>
                 </li>

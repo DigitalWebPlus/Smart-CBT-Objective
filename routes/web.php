@@ -13,7 +13,7 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::middleware(['auth', 'log.candidate.activity'])->prefix('candidate')->group(function () {
+Route::middleware(['auth', 'candidate.active', 'log.candidate.activity'])->prefix('candidate')->group(function () {
     Route::get('dashboard', CandidateDashboardController::class)
         ->middleware('verified')
         ->name('dashboard');

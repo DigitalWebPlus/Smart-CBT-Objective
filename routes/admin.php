@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\Auth\AuthenticatedSessionController as AdminLogin
 use App\Http\Controllers\Admin\DepartmentController;
 use App\Http\Controllers\Admin\ExamAttemptController;
 use App\Http\Controllers\Admin\ExamController;
+use App\Http\Controllers\Admin\ExamSettingController;
 use App\Http\Controllers\Admin\ExamMonitorController;
 use App\Http\Controllers\Admin\ObjectiveAttemptAnswerController;
 use App\Http\Controllers\Admin\ObjectiveQuestionController;
@@ -96,6 +97,11 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::prefix('settings')->name('settings.')->group(function () {
             Route::get('/', [SiteSettingController::class, 'edit'])->name('edit');
             Route::put('/', [SiteSettingController::class, 'update'])->name('update');
+        });
+
+        Route::prefix('exam-settings')->name('exam-settings.')->group(function () {
+            Route::get('/', [ExamSettingController::class, 'edit'])->name('edit');
+            Route::put('/', [ExamSettingController::class, 'update'])->name('update');
         });
 
         Route::post('logout', [AdminLoginController::class, 'destroy'])->name('logout');
