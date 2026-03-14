@@ -72,11 +72,13 @@
                     </div>
                 </div>
 
-                @php($now = now())
+                @php
+                    $now = now();
+                @endphp
 
                 <div class="card bg-purple-lt">
                     <div class="card-header">
-                        <h3 class="card-title">Live Attempt Details</h3>
+                        <h3 class="card-title">Live Attempt Summaries</h3>
                         <div class="card-subtitle text-secondary">{{ number_format($attempts->total()) }} attempt(s) matched current filters</div>
                     </div>
                     <div class="table-responsive">
@@ -89,7 +91,6 @@
                                     <th>Timing</th>
                                     <th>Access</th>
                                     <th>Status</th>
-                                    <th class="w-1"></th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -160,14 +161,10 @@
                                                 {{ \Illuminate\Support\Str::headline($attempt->status) }}
                                             </span>
                                         </td>
-                                        <td class="text-end">
-                                            <a href="{{ route('admin.monitor-exams.attempts.show', [$attempt->exam_id, $attempt]) }}"
-                                                class="btn btn-sm btn-outline-secondary">Open</a>
-                                        </td>
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="7" class="text-center text-secondary">No in-progress attempts found.</td>
+                                        <td colspan="6" class="text-center text-secondary">No in-progress attempts found.</td>
                                     </tr>
                                 @endforelse
                             </tbody>

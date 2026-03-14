@@ -161,7 +161,7 @@
                                     <th>Subjects</th>
                                     <th>Total Score</th>
                                     <th>% Score</th>
-                                    <th class="w-1">Action</th>
+                                    <th class="text-end">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -183,9 +183,23 @@
                                                     \App\Models\ExamAttempt::STATUS_RETAKE => 'orange',
                                                 ];
                                             @endphp
-                                            <span class="badge bg-{{ $statusColors[$attempt->status] ?? 'secondary' }} text-white">
-                                                {{ \Illuminate\Support\Str::headline($attempt->status) }}
-                                            </span>
+                                            <div class="d-flex flex-column gap-2">
+                                                <span class="badge bg-{{ $statusColors[$attempt->status] ?? 'secondary' }} text-white">
+                                                    {{ \Illuminate\Support\Str::headline($attempt->status) }}
+                                                </span>
+                                                <form method="POST" action="{{ route('admin.attempts.answers.status', [$exam->id, $attempt->id]) }}" class="d-flex gap-2">
+                                                    @csrf
+                                                    @method('PUT')
+                                                    <select name="status" class="form-select form-select-sm">
+                                                        @foreach ($statusOptions as $attemptStatus)
+                                                            <option value="{{ $attemptStatus }}" @selected($attempt->status === $attemptStatus)>
+                                                                {{ \Illuminate\Support\Str::headline($attemptStatus) }}
+                                                            </option>
+                                                        @endforeach
+                                                    </select>
+                                                    <button type="submit" class="btn btn-sm btn-primary">Update</button>
+                                                </form>
+                                            </div>
                                         </td>
                                         <td>
                                             @php
@@ -232,7 +246,10 @@
                                             {{ number_format((float) ($percentage ?? 0), 2) }}%
                                         </td>
                                         <td class="text-end">
-                                            <a href="{{ route('admin.attempts.answers.show', [$attempt->exam, $attempt]) }}" class="btn btn-primary">Manage Attempt</a>
+                                            <a href="{{ route('admin.attempts.answers.download', [$exam->id, $attempt->id]) }}"
+                                                class="btn btn-sm btn-outline-secondary">
+                                                Download Responses
+                                            </a>
                                         </td>
                                     </tr>
                                 @empty

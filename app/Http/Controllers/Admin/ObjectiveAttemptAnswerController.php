@@ -8,14 +8,14 @@ use App\Http\Controllers\Controller;
 use App\Models\Exam;
 use App\Models\ExamAttempt;
 use App\Models\ExamQuestion;
-use App\Models\ObjectiveOption;
 use App\Models\ObjectiveResponse;
 use App\Services\NotificationService;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Symfony\Component\HttpFoundation\Response;
 use Illuminate\View\View;
-use Illuminate\Support\Collection;
 
 class ObjectiveAttemptAnswerController extends Controller
 {
@@ -172,8 +172,9 @@ class ObjectiveAttemptAnswerController extends Controller
         ));
     }
 
-    public function show(Request $request, Exam $exam): View
+    public function show(Request $request, $exam): View
     {
+        $exam = Exam::findOrFail((int) $exam);
         $status = $request->string('status')->toString();
         $candidateQuery = trim((string) $request->input('candidate', ''));
         $statusOptions = [
@@ -309,161 +310,6 @@ class ObjectiveAttemptAnswerController extends Controller
         ));
     }
 
-    public function showAttempt(Request $request, Exam $exam, ExamAttempt $attempt): View
-    {
-        return app(ExamAttemptController::class)->show($request, $exam, $attempt);
-    }
-
-    private function backfillResponseSelections(Collection $responses): void
-    {
-        foreach ($responses as $response) {
-            $question = $response->examQuestion?->question ?? $response->question;
-            if (! $question) {
-                continue;
-            }
-
-            $rawSelected = $response->selected_option_ids ?? [];
-            if (empty($rawSelected) && ! empty($response->metadata)) {
-                $rawSelected = $response->metadata['selected_option_ids']
-                    ?? $response->metadata['selected_option_id']
-                    ?? $response->metadata['selected_options']
-                    ?? $response->metadata['selected_option']
-                    ?? [];
-            }
-
-            $selectedIds = ObjectiveResponse::normalizeSelectedOptionIds($rawSelected);
-            $rawLabels = collect($response->metadata['selected_option_labels'] ?? [])
-                ->filter(fn ($value) => $value !== null && $value !== '')
-                ->map(fn ($value) => (string) $value)
-                ->values()
-                ->all();
-
-            if (empty($selectedIds) && ! empty($rawLabels)) {
-                $optionMap = $question->options->mapWithKeys(function ($option) {
-                    $label = mb_strtolower(trim((string) $option->label));
-                    $description = mb_strtolower(trim((string) ($option->description ?? '')));
-                    return [
-                        $label => $option->id,
-                        $description => $option->id,
-                    ];
-                });
-
-                $selectedIds = collect($rawLabels)
-                    ->map(fn ($label) => $optionMap->get(mb_strtolower(trim((string) $label))))
-                    ->filter(fn ($value) => $value !== null)
-                    ->map(fn ($value) => (int) $value)
-                    ->values()
-                    ->all();
-            }
-
-            $selectedLabels = ObjectiveResponse::resolveSelectedOptionLabels($question, $selectedIds);
-
-            $metadata = $response->metadata ?? [];
-            $dirty = false;
-
-            if (empty($response->selected_option_ids) && ! empty($selectedIds)) {
-                $response->selected_option_ids = $selectedIds;
-                $dirty = true;
-            }
-
-            if (! empty($selectedIds) && empty($metadata['selected_option_ids'])) {
-                $metadata['selected_option_ids'] = $selectedIds;
-                $dirty = true;
-            }
-
-            if (! empty($selectedLabels) && empty($metadata['selected_option_labels'])) {
-                $metadata['selected_option_labels'] = $selectedLabels;
-                $dirty = true;
-            }
-
-            if ($dirty) {
-                $response->metadata = $metadata;
-                $response->save();
-            }
-        }
-    }
-
-    /**
-     * @return array{0: array<int, int>, 1: array<int, string>}
-     */
-    private function normalizeResponseSelections(ObjectiveResponse $response): array
-    {
-        $rawSelected = $response->selected_option_ids ?? [];
-
-        if (empty($rawSelected) && ! empty($response->metadata)) {
-            $rawSelected = $response->metadata['selected_option_ids']
-                ?? $response->metadata['selected_option_id']
-                ?? $response->metadata['selected_options']
-                ?? $response->metadata['selected_option']
-                ?? [];
-        }
-
-        $selectedIds = ObjectiveResponse::normalizeSelectedOptionIds($rawSelected);
-
-        $rawValues = collect(is_array($rawSelected) ? $rawSelected : [$rawSelected])
-            ->filter(fn ($value) => $value !== null && $value !== '')
-            ->values();
-
-        $rawLabels = $rawValues
-            ->map(function ($value) {
-                if (is_array($value)) {
-                    return (string) ($value['label'] ?? $value['description'] ?? $value['text'] ?? '');
-                }
-                if (is_object($value)) {
-                    return (string) ($value->label ?? $value->description ?? $value->text ?? '');
-                }
-                if (! is_numeric($value)) {
-                    return (string) $value;
-                }
-                return '';
-            })
-            ->filter()
-            ->values()
-            ->all();
-
-        if (empty($rawLabels) && ! empty($response->metadata)) {
-            $rawLabels = collect($response->metadata['selected_option_labels']
-                ?? $response->metadata['selected_option_texts']
-                ?? $response->metadata['selected_option_values']
-                ?? [])
-                ->filter(fn ($value) => $value !== null && $value !== '')
-                ->map(fn ($value) => (string) $value)
-                ->values()
-                ->all();
-        }
-
-        if (empty($rawLabels) && empty($selectedIds)) {
-            $numericValues = $rawValues
-                ->filter(fn ($value) => is_numeric($value))
-                ->map(fn ($value) => (int) $value)
-                ->values();
-            $optionList = $response->examQuestion?->question?->options?->values() ?? collect();
-
-            if ($numericValues->isNotEmpty() && $optionList->isNotEmpty()) {
-                $indexOffset = $numericValues->contains(0) ? 0 : 1;
-                if (! $numericValues->contains(0)) {
-                    $min = $numericValues->min();
-                    $max = $numericValues->max();
-                    if ($min < 1 || $max > $optionList->count()) {
-                        $indexOffset = 0;
-                    }
-                }
-
-                $rawLabels = $numericValues
-                    ->map(function (int $value) use ($optionList, $indexOffset) {
-                        $index = $value - $indexOffset;
-                        $option = $optionList->get($index);
-                        return $option?->description ?: $option?->label;
-                    })
-                    ->filter()
-                    ->values()
-                    ->all();
-            }
-        }
-
-        return [$selectedIds, $rawLabels];
-    }
-
     public function updateStatus(Request $request, mixed $first = null, mixed $second = null): RedirectResponse
     {
         $attemptRouteValue = $request->route('attempt');
@@ -479,9 +325,9 @@ class ObjectiveAttemptAnswerController extends Controller
                 ? $examRouteValue->id
                 : (int) $examRouteValue;
 
-            if ($examId > 0 && $attempt->exam_id !== $examId) {
-                abort(404);
-            }
+            // if ($examId > 0 && $attempt->exam_id !== $examId) {
+            //     abort(404);
+            // }
         }
 
         $statusOptions = [
@@ -507,5 +353,135 @@ class ObjectiveAttemptAnswerController extends Controller
         }
 
         return back();
+    }
+
+    public function downloadResponses(mixed $exam, mixed $attempt): Response
+    {
+        $examId = $exam instanceof Exam ? $exam->id : (int) $exam;
+        $attemptId = $attempt instanceof ExamAttempt ? $attempt->id : (int) $attempt;
+
+        $examModel = Exam::query()->findOrFail($examId);
+        $attemptModel = ExamAttempt::query()
+            ->with([
+                'candidate:id,name,email,registration_number,photo',
+                'responses.question.subject',
+                'responses.question.options',
+            ])
+            ->findOrFail($attemptId);
+
+        // abort_if($attemptModel->exam_id !== $examModel->id, 404);
+
+        $responseRows = $attemptModel->responses
+            ->map(function (ObjectiveResponse $response): array {
+                $question = $response->question;
+                $selectedIds = ObjectiveResponse::normalizeSelectedOptionIds($response->selected_option_ids ?? []);
+                $orderedOptions = collect($question?->options ?? [])->sortBy(function ($option) {
+                    return (int) ($option->display_order ?? 0);
+                })->values();
+                $optionMap = $orderedOptions->keyBy('id');
+                $optionLetterById = $orderedOptions
+                    ->values()
+                    ->mapWithKeys(function ($option, int $index): array {
+                        $label = trim((string) ($option->label ?? ''));
+                        if ($label !== '' && preg_match('/^[A-Za-z]$/', $label) === 1) {
+                            return [(int) $option->id => strtoupper($label)];
+                        }
+
+                        return [(int) $option->id => chr(65 + $index)];
+                    });
+                $selectedLabels = collect($selectedIds)
+                    ->map(function (int $optionId) use ($optionMap, $optionLetterById): ?string {
+                        $option = $optionMap->get($optionId);
+                        if (! $option) {
+                            return null;
+                        }
+
+                        $alphabet = (string) ($optionLetterById->get((int) $optionId) ?? '');
+                        $answerText = trim((string) ($option->description ?? ''));
+                        if ($answerText === '') {
+                            $rawLabel = trim((string) ($option->label ?? ''));
+                            $answerText = preg_match('/^[A-Za-z]$/', $rawLabel) === 1 ? '' : $rawLabel;
+                        }
+
+                        if ($alphabet !== '' && $answerText !== '') {
+                            return '(' . $alphabet . ') ' . $answerText;
+                        }
+
+                        if ($alphabet !== '') {
+                            return '(' . $alphabet . ')';
+                        }
+
+                        return $answerText !== '' ? $answerText : null;
+                    })
+                    ->filter()
+                    ->values()
+                    ->all();
+
+                return [
+                    'subject' => (string) ($question?->subject?->name ?? $question?->subject?->code ?? 'General'),
+                    'question' => (string) ($question?->question_text ?? ''),
+                    'selected_answer' => implode(' | ', $selectedLabels),
+                ];
+            })
+            ->values();
+
+        $siteName = (string) config('settings.site_name', config('app.name', 'CBT Objective'));
+        $brandLogoDataUri = $this->imagePathToDataUri((string) config('settings.site_logo', ''));
+        $candidatePhotoDataUri = $this->imagePathToDataUri((string) ($attemptModel->candidate?->photo ?? ''));
+
+        $fileName = sprintf(
+            'attempt-responses_exam-%d_attempt-%d_candidate-%d.pdf',
+            $examModel->id,
+            $attemptModel->id,
+            (int) ($attemptModel->user_id ?? 0)
+        );
+
+        $pdf = Pdf::loadView('admin.attempts.objective.responses-pdf', [
+            'exam' => $examModel,
+            'attempt' => $attemptModel,
+            'candidate' => $attemptModel->candidate,
+            'rows' => $responseRows,
+            'siteName' => $siteName,
+            'brandLogoDataUri' => $brandLogoDataUri,
+            'candidatePhotoDataUri' => $candidatePhotoDataUri,
+        ])->setPaper('a4', 'portrait');
+
+        return $pdf->download($fileName);
+    }
+
+    private function imagePathToDataUri(string $relativePath): ?string
+    {
+        $path = trim($relativePath);
+        if ($path === '') {
+            return null;
+        }
+
+        $normalizedPath = ltrim($path, '/');
+        $candidates = [
+            public_path($normalizedPath),
+            public_path('uploads/' . $normalizedPath),
+            storage_path('app/public/' . $normalizedPath),
+        ];
+
+        $absolutePath = null;
+        foreach ($candidates as $candidatePath) {
+            if (is_file($candidatePath) && is_readable($candidatePath)) {
+                $absolutePath = $candidatePath;
+                break;
+            }
+        }
+
+        if ($absolutePath === null) {
+            return null;
+        }
+
+        $contents = @file_get_contents($absolutePath);
+        if ($contents === false) {
+            return null;
+        }
+
+        $mimeType = mime_content_type($absolutePath) ?: 'image/png';
+
+        return 'data:' . $mimeType . ';base64,' . base64_encode($contents);
     }
 }

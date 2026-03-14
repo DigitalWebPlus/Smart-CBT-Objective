@@ -203,32 +203,17 @@
                             </div>
                             <div class="list-group list-group-flush">
                                 @forelse ($pendingReviews as $attempt)
-                                    @if ($attempt->exam)
-                                        <a href="{{ route('admin.monitor-exams.attempts.show', [$attempt->exam, $attempt]) }}"
-                                            class="list-group-item list-group-item-action">
-                                            <div class="d-flex justify-content-between">
-                                                <div>
-                                                    <div class="fw-semibold">{{ $attempt->exam?->title ?? 'Exam' }}</div>
-                                                    <div class="text-secondary small">{{ $attempt->candidate?->name ?? 'Candidate' }}</div>
-                                                </div>
-                                                <div class="text-secondary small text-end">
-                                                    {{ optional($attempt->submitted_at)->diffForHumans() ?? 'No submission time' }}
-                                                </div>
+                                    <div class="list-group-item">
+                                        <div class="d-flex justify-content-between">
+                                            <div>
+                                                <div class="fw-semibold">{{ $attempt->exam?->title ?? 'Exam unavailable' }}</div>
+                                                <div class="text-secondary small">{{ $attempt->candidate?->name ?? 'Candidate' }}</div>
                                             </div>
-                                        </a>
-                                    @else
-                                        <div class="list-group-item">
-                                            <div class="d-flex justify-content-between">
-                                                <div>
-                                                    <div class="fw-semibold">Exam unavailable</div>
-                                                    <div class="text-secondary small">{{ $attempt->candidate?->name ?? 'Candidate' }}</div>
-                                                </div>
-                                                <div class="text-secondary small text-end">
-                                                    {{ optional($attempt->submitted_at)->diffForHumans() ?? 'No submission time' }}
-                                                </div>
+                                            <div class="text-secondary small text-end">
+                                                {{ optional($attempt->submitted_at)->diffForHumans() ?? 'No submission time' }}
                                             </div>
                                         </div>
-                                    @endif
+                                    </div>
                                 @empty
                                     <div class="list-group-item text-secondary">No submitted attempts waiting review.</div>
                                 @endforelse

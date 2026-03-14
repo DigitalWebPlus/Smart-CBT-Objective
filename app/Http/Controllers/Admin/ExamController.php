@@ -12,12 +12,44 @@ use App\Models\ExamQuestion;
 use App\Models\ObjectiveQuestion;
 use App\Models\Subject;
 use App\Services\NotificationService;
+use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class ExamController extends Controller
 {
+    public function bin(): View
+    {
+        $supportsSoftDeletes = in_array(\Illuminate\Database\Eloquent\SoftDeletes::class, class_uses_recursive(Exam::class), true);
+
+        if (! $supportsSoftDeletes) {
+            return view('admin.exams.bin', [
+                'exams' => collect(),
+            ]);
+        }
+
+        $exams = Exam::query()
+            ->onlyTrashed()
+            ->with('subjects')
+            ->latest('deleted_at')
+            ->get()
+            ->map(function (Exam $exam): array {
+                return [
+                    'id' => (int) $exam->id,
+                    'exam_type' => (string) ($exam->exam_type ?? Exam::TYPE_OBJECTIVE),
+                    'title' => (string) $exam->title,
+                    'description' => (string) ($exam->description ?? ''),
+                    'subjects' => $exam->subjects,
+                    'deleted_at' => $exam->deleted_at,
+                ];
+            });
+
+        return view('admin.exams.bin', [
+            'exams' => $exams,
+        ]);
+    }
+
     public function index(): View
     {
         $exams = Exam::query()
@@ -195,5 +227,59 @@ class ExamController extends Controller
         }
 
         return redirect()->route('admin.exams.index');
+    }
+
+    public function restore(Request $request, string $type, int $exam): RedirectResponse
+    {
+        $supportsSoftDeletes = in_array(\Illuminate\Database\Eloquent\SoftDeletes::class, class_uses_recursive(Exam::class), true);
+
+        if (! $supportsSoftDeletes) {
+            NotificationService::ERROR('Exam bin restore is not available in this configuration.');
+
+            return back();
+        }
+
+        $trashed = Exam::query()
+            ->withTrashed()
+            ->where('exam_type', $type)
+            ->find($exam);
+
+        if (! $trashed || ! $trashed->trashed()) {
+            NotificationService::ERROR('Deleted exam not found.');
+
+            return back();
+        }
+
+        $trashed->restore();
+        NotificationService::SUCCESS('Exam restored successfully.');
+
+        return redirect()->route('admin.exams.bin');
+    }
+
+    public function forceDelete(Request $request, string $type, int $exam): RedirectResponse
+    {
+        $supportsSoftDeletes = in_array(\Illuminate\Database\Eloquent\SoftDeletes::class, class_uses_recursive(Exam::class), true);
+
+        if (! $supportsSoftDeletes) {
+            NotificationService::ERROR('Exam bin permanent delete is not available in this configuration.');
+
+            return back();
+        }
+
+        $trashed = Exam::query()
+            ->withTrashed()
+            ->where('exam_type', $type)
+            ->find($exam);
+
+        if (! $trashed || ! $trashed->trashed()) {
+            NotificationService::ERROR('Deleted exam not found.');
+
+            return back();
+        }
+
+        $trashed->forceDelete();
+        NotificationService::SUCCESS('Exam deleted permanently.');
+
+        return redirect()->route('admin.exams.bin');
     }
 }

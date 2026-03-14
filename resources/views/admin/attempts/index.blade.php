@@ -6,8 +6,8 @@
             <div class="container-xl d-flex justify-content-between align-items-center">
                 <div>
                     <div class="page-pretitle">Results</div>
-                    <h2 class="page-title">Attempt Answers</h2>
-                    <p class="text-secondary mb-0">Open an attempt to review answered questions.</p>
+                    <h2 class="page-title">Attempt Summaries</h2>
+                    <p class="text-secondary mb-0">View submitted attempt summaries and performance metrics.</p>
                 </div>
             </div>
         </div>
@@ -71,7 +71,6 @@
                                     <th>Candidate</th>
                                     <th>Status</th>
                                     <th>Score</th>
-                                    <th class="w-1"></th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -94,15 +93,10 @@
                                             {{ number_format((float) $attempt->total_score, 2) }}
                                             / {{ number_format((float) $attempt->exam?->total_marks, 2) }}
                                         </td>
-                                        <td class="text-end">
-                                            @if ($attempt->exam)
-                                                <a href="{{ route('admin.monitor-exams.attempts.show', [$attempt->exam, $attempt]) }}" class="btn btn-sm btn-outline-secondary">View Answers</a>
-                                            @endif
-                                        </td>
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="5" class="text-center text-secondary">No attempts found.</td>
+                                        <td colspan="4" class="text-center text-secondary">No attempts found.</td>
                                     </tr>
                                 @endforelse
                             </tbody>

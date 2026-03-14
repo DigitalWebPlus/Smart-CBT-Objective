@@ -57,11 +57,4 @@ class ExamMonitorController extends Controller
 
         return view('admin.monitor-exams.index', compact('attempts', 'exams', 'examId', 'candidateQuery', 'monitorStats'));
     }
-
-    public function show(Request $request, Exam $exam, ExamAttempt $attempt, ExamAttemptController $examAttemptController): View
-    {
-        $attemptReviewView = $examAttemptController->show($request, $exam, $attempt);
-
-        return view('admin.monitor-exams.show', $attemptReviewView->getData());
-    }
 }

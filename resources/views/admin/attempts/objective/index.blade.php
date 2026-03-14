@@ -6,8 +6,8 @@
             <div class="container-xl d-flex justify-content-between align-items-center">
                 <div>
                     <div class="page-pretitle">Attempts</div>
-                    <h2 class="page-title">Attempt Objective Answers</h2>
-                    <p class="text-secondary mb-0">Open an attempt to review answered questions.</p>
+                    <h2 class="page-title">Objective Attempt Summaries</h2>
+                    <p class="text-secondary mb-0">View objective attempt summaries and score distribution.</p>
                 </div>
             </div>
         </div>
@@ -170,7 +170,6 @@
                                         <th>Subjects</th>
                                         <th>Total Score</th>
                                         <th>% Score</th>
-                                        <th class="w-1">Action</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -254,15 +253,10 @@
                                             <td>
                                                 {{ number_format((float) ($percentage ?? 0), 2) }}%
                                             </td>
-                                            <td class="text-end">
-                                                @if ($attempt->exam)
-                                                    <a href="{{ route('admin.monitor-exams.attempts.show', [$attempt->exam, $attempt]) }}" class="btn btn-sm btn-outline-secondary">View Answers</a>
-                                                @endif
-                                            </td>
                                         </tr>
                                     @empty
                                         <tr>
-                                            <td colspan="8" class="text-center text-secondary">No attempts found for the selected exam.</td>
+                                            <td colspan="7" class="text-center text-secondary">No attempts found for the selected exam.</td>
                                         </tr>
                                     @endforelse
                                 </tbody>

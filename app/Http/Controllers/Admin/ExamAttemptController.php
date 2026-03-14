@@ -16,21 +16,6 @@ use Illuminate\View\View;
 
 class ExamAttemptController extends Controller
 {
-    public function index(Request $request, Exam $exam): View
-    {
-        $attempts = $exam->attempts()
-            ->whereIn('status', [
-                ExamAttempt::STATUS_SUBMITTED,
-                ExamAttempt::STATUS_PUBLISHED,
-                ExamAttempt::STATUS_CANCELED,
-                ExamAttempt::STATUS_RETAKE,
-            ])
-            ->latest()
-            ->paginate(20);
-
-        return view('admin.exams.attempts.index', compact('exam', 'attempts'));
-    }
-
     public function show(Request $request, Exam $exam, ExamAttempt $attempt): View
     {
         abort_if($attempt->exam_id !== $exam->id, 404);
@@ -54,7 +39,7 @@ class ExamAttemptController extends Controller
             $responseSelectionsFallbackByObjectiveQuestion,
         ] = $this->buildResponseSelectionMaps($responses);
 
-        return view('admin.exams.attempts.show', [
+        return view('admin.monitor-exams.show', [
             'exam' => $exam,
             'attempt' => $attempt,
             'responseSelectionsByExamQuestion' => $responseSelectionsByExamQuestion,
@@ -64,8 +49,10 @@ class ExamAttemptController extends Controller
         ]);
     }
 
-    public function destroy(Request $request, Exam $exam, ExamAttempt $attempt): RedirectResponse
+    public function destroy(Request $request, $exam, $attempt): RedirectResponse
     {
+        $exam = Exam::findOrFail((int) $exam);
+        $attempt = ExamAttempt::findOrFail((int) $attempt);
         abort_if($attempt->exam_id !== $exam->id, 404);
 
         $attempt->loadMissing('candidate');

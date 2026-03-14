@@ -26,10 +26,16 @@ class ExamAttemptController extends Controller
 
         $userId = Auth::id();
         if (! $userId) {
-            abort(403);
+            NotificationService::ERROR('Your session has expired. Please log in again and start the exam.');
+
+            return redirect()->route('login');
         }
 
-        $this->authorizeExamAccess($exam, $userId);
+        if (! $this->authorizeExamAccess($exam, $userId)) {
+            NotificationService::ERROR('This exam is not available to your department. Please contact support.');
+
+            return redirect()->route('candidate.exams.index');
+        }
 
         $hasOtherInProgress = ExamAttempt::query()
             ->where('user_id', $userId)
@@ -113,7 +119,7 @@ class ExamAttemptController extends Controller
     public function show(ExamAttempt $attempt): View|RedirectResponse
     {
         $userId = Auth::id();
-        if (! $userId || $attempt->user_id !== $userId) {
+        if (! $userId || (int) $attempt->user_id !== (int) $userId) {
             abort(403);
         }
 
@@ -146,7 +152,7 @@ class ExamAttemptController extends Controller
     public function submit(Request $request, ExamAttempt $attempt): JsonResponse|RedirectResponse
     {
         $userId = Auth::id();
-        if (! $userId || $attempt->user_id !== $userId) {
+        if (! $userId || (int) $attempt->user_id !== (int) $userId) {
             abort(403);
         }
 
@@ -282,7 +288,7 @@ class ExamAttemptController extends Controller
     public function autosave(Request $request, ExamAttempt $attempt): JsonResponse
     {
         $userId = Auth::id();
-        if (! $userId || $attempt->user_id !== $userId) {
+        if (! $userId || (int) $attempt->user_id !== (int) $userId) {
             abort(403);
         }
 
@@ -350,14 +356,12 @@ class ExamAttemptController extends Controller
         ]);
     }
 
-    private function authorizeExamAccess(Exam $exam, int $candidateId): void
+    private function authorizeExamAccess(Exam $exam, int $candidateId): bool
     {
         $departmentIds = $this->candidateDepartmentIds($candidateId);
 
-        $hasAccess = ! empty($departmentIds)
+        return ! empty($departmentIds)
             && $exam->departments()->whereIn('departments.id', $departmentIds)->exists();
-
-        abort_unless($hasAccess, 403, 'This exam is not available to your department.');
     }
 
     /**
